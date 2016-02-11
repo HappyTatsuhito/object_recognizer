@@ -64,7 +64,7 @@ class ObjectRecognizer:
     def recognizeObject(self, object_name='None', bb = None):
         if bb is None:
             bb = self.bbox
-        rospy.loginfo('recognize')
+        #rospy.loginfo('recognize')
         if type(object_name) != str:
             object_name = object_name.target
         object_list = []
@@ -98,7 +98,11 @@ class ObjectRecognizer:
             bb = self.bbox
             if target_name in self.object_dict.keys():
                 for i in range(len(self.object_dict[target_name])):
+                    rospy.loginfo(self.object_dict[target_name][i])
                     object_existence, object_list = self.recognizeObject(self.object_dict[target_name][i], bb)
+                    if object_existence == True:
+                        target_name = self.object_dict[target_name][i]
+                        break
             else:
                 object_existence, object_list = self.recognizeObject(target_name, bb)
 #            rospy.sleep(1.0)
