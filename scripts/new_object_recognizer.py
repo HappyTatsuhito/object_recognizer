@@ -72,11 +72,6 @@ class ObjectRecognizer:
             return False, []
         for i in range(len(bb)):
             object_list.append(bb[i].Class)
-        '''
-        if object_name in self.object_dict.keys():
-            object_existence = self.object_dict[obejct_name] in object_list
-        else:
-        '''
         object_existence = object_name in object_list
         return object_existence, object_list
 
