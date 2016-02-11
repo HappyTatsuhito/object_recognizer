@@ -31,7 +31,7 @@ class ObjectRecognizer:
         self.image_range_pub = rospy.Publisher('/object/image_range',ImageRange,queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop',Twist,queue_size=1)
         #ServiceServer
-        recog_service_server = rospy.Service('/object/recognize',SetBool,self.recognizeObject)
+        recog_service_server = rospy.Service('/object/recognize',RecognizeExistence,self.recognizeObject)
         #ActionServer
         self.sas = actionlib.SimpleActionServer('/object/localize',
                                                 ObjectRecognizerAction,
@@ -60,14 +60,16 @@ class ObjectRecognizer:
         self.object_centroid = res
 
     def recognizeObject(self, object_name='None'):
-        if type(object_name) == type(String()):
-            object_name = object_name.data
+        if type(object_name) != str:
+            object_name = object_name.target
         bb = self.bbox
         object_list = []
+        if bb == 'None':
+            return False, []
         for i in range(len(bb)):
             object_list.append(bb[i].Class)
         object_existence = object_name in object_list
-        return object_existence, target_list
+        return object_existence, object_list
 
     def actionPreempt(self):
         rospy.loginfo('preempt callback')
