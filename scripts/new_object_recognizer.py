@@ -119,9 +119,9 @@ class ObjectRecognizer:
                 if not math.isnan(object_coordinate.x):# 物体が正面になるように回転する処理
                     object_coordinate.y += 0.08 # calibrate RealSenseCamera d435
                     object_angle = math.atan2(object_coordinate.y, object_coordinate.x)
-                    if abs(object_angle) > 0.06:
+                    if abs(object_angle) > 0.07:
                         rospy.loginfo('There is not object in front.')
-                        cmd.angular.z = object_angle * 3.2 #要調整
+                        cmd.angular.z = object_angle * 3.0 #要調整
                         if abs(cmd.angular.z) < 0.65:
                             cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.65
                         rospy.loginfo('cmd.angura.z : %s'%(object_angle))
