@@ -31,7 +31,7 @@ class ObjectRecognizer:
         self.image_range_pub = rospy.Publisher('/object/image_range',ImageRange,queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop',Twist,queue_size=1)
         #ServiceServer
-        recog_service_server = rospy.Service('/object/recog',SetBool,self.recognizeObject)
+        recog_service_server = rospy.Service('/object/recognize',SetBool,self.recognizeObject)
         #ActionServer
         self.sas = actionlib.SimpleActionServer('/object/localize',
                                                 ObjectRecognizerAction,
