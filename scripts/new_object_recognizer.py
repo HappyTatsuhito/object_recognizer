@@ -43,7 +43,8 @@ class ObjectRecognizer:
         self.bbox = 'None'
         self.update_time = 0 # darknetからpublishされた時刻を保存
         self.update_flg = False # darknetからpublishされたかどうかの確認
-        self.object_centroid = False
+        self.object_centroid = Point()
+        self.centroid_flg = False
         self.preempt_flg = False
 
         self.sas.start()
@@ -58,8 +59,10 @@ class ObjectRecognizer:
 
     def detectorCB(self, res):
         self.object_centroid = res
+        self.centroid_flg = True
 
     def recognizeObject(self, object_name='None'):
+        rospy.loginfo('recognize')
         if type(object_name) != str:
             object_name = object_name.target
         bb = self.bbox
@@ -77,12 +80,16 @@ class ObjectRecognizer:
         self.preempt_flg = True
         
     def localizeObject(self, goal):
+        rospy.loginfo('start action %s'%(goal.recog_goal))
         target = goal.recog_goal
         localize_feedback = ObjectRecognizerFeedback()
         localize_result = ObjectRecognizerResult()
         loop_flg = True
-        while(loop_flg):
+        while loop_flg and not rospy.is_shutdown():
             object_existence, object_list = self.recognizeObject(target)
+            rospy.loginfo(object_existence)
+            rospy.loginfo(object_list)
+            bb = self.bbox
             range_flg = False
             # ここらへんをもう少し綺麗に書きたい
             if target == 'None' and not object_existence:# 適当に見えたものを掴むための処理
@@ -99,10 +106,10 @@ class ObjectRecognizer:
                 object_image_range.right = bb[list_num].xmax
                 rospy.sleep(0.2)
                 self.image_range_pub.publish(object_image_range)
-                while self.object_centroid == False and not rospy.is_shutdown():
+                while self.centroid_flg == False and not rospy.is_shutdown():
                     pass
                 object_coordinate = self.object_centroid
-                self.object_centroid = False
+                self.centroid_flg = False
                 
                 if not math.isnan(object_coordinate.x):# 物体が正面になるように回転する処理
                     object_coordinate.y += 0.08 # calibrate RealSenseCamera d435
@@ -111,12 +118,12 @@ class ObjectRecognizer:
                         rospy.loginfo('There is not object in front.')
                         cmd = Twist()
                         cmd.linear.x = 0
-                        cmd.angular.z = obj_angle * 4.0 #要調整
+                        cmd.angular.z = object_angle * 3.2 #要調整
                         if abs(cmd.angular.z) < 0.85:
                             cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.85
-                        rospy.loginfo('cmd.angura.z : %s'%(obj_angle))
+                        rospy.loginfo('cmd.angura.z : %s'%(object_angle))
                         self.cmd_vel_pub.publish(cmd)
-                        rospy.sleep(0.2)
+                        rospy.sleep(1.0)
                         # retry
                     else:
                         # success
