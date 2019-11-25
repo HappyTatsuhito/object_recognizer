@@ -85,6 +85,9 @@ class ObjectRecognizer:
         localize_feedback = ObjectRecognizerFeedback()
         localize_result = ObjectRecognizerResult()
         loop_flg = True
+        cmd = Twist()
+        cmd.linear.x = 0
+        cmd.angular.z = 0
         while loop_flg and not rospy.is_shutdown():
             object_existence, object_list = self.recognizeObject(target)
             rospy.loginfo(object_existence)
@@ -110,30 +113,37 @@ class ObjectRecognizer:
                     pass
                 object_coordinate = self.object_centroid
                 self.centroid_flg = False
-                
                 if not math.isnan(object_coordinate.x):# 物体が正面になるように回転する処理
                     object_coordinate.y += 0.08 # calibrate RealSenseCamera d435
                     object_angle = math.atan2(object_coordinate.y, object_coordinate.x)
                     if abs(object_angle) > 0.05:
                         rospy.loginfo('There is not object in front.')
-                        cmd = Twist()
-                        cmd.linear.x = 0
                         cmd.angular.z = object_angle * 3.2 #要調整
                         if abs(cmd.angular.z) < 0.85:
                             cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.85
                         rospy.loginfo('cmd.angura.z : %s'%(object_angle))
                         self.cmd_vel_pub.publish(cmd)
+                        cmd.angular.z = 0
                         rospy.sleep(1.0)
                         # retry
                     else:
                         # success
                         loop_flg = False
                 else:
+                    #前後進
                     range_flg = False
+                        cmd.linear.x = 0.4
+                        self.cmd_vel_pub.publish(cmd)
+                        cmd.linear.x = 0
+            else:
+                #回転
+                cmd.angular.z = 3.0
+                self.cmd_vel_pub.publish(cmd)
+                cmd.angular.z = 0
             if loop_flg:
                 localize_feedback.recog_feedback = range_flg
                 self.sas.publish_feedback(localize_feedback)
-                range_flg = False
+            range_flg = False
             if self.preempt_flg:
                 self.preempt_flg = False
                 break
