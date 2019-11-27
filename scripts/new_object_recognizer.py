@@ -23,21 +23,21 @@ from manipulation.msg import *
 
 class ObjectRecognizer:
     def __init__(self):
-        #TopicSubscriber
+        # topic subscriber
         realsense_sub = rospy.Subscriber('/camera/color/image_raw',Image,self.ImageCB)
         bounding_box_sub  = rospy.Subscriber('/darknet_ros/bounding_boxes',BoundingBoxes,self.BoundingBoxCB)
         detector_sub = rospy.Subscriber('/object/xyz_centroid',Point,self.detectorCB)
-        #TopicPublisher service化,モジュール化したい
+        # topic publisher service化,モジュール化したい
         self.image_range_pub = rospy.Publisher('/object/image_range',ImageRange,queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop',Twist,queue_size=1)
-        #ServiceServer
+        # service server
         recog_service_server = rospy.Service('/object/recognize',RecognizeExistence,self.recognizeObject)
-        #ActionServer
-        self.sas = actionlib.SimpleActionServer('/object/localize',
+        # action server
+        self.act = actionlib.SimpleActionServer('/object/localize',
                                                 ObjectRecognizerAction,
                                                 execute_cb = self.localizeObject,
                                                 auto_start = False)
-        self.sas.register_preempt_callback(self.actionPreempt)
+        self.act.register_preempt_callback(self.actionPreempt)
         
         self.bridge = CvBridge() # 仕様がわかり次第消す
         self.bbox = 'None'
@@ -47,7 +47,7 @@ class ObjectRecognizer:
         self.centroid_flg = False
         self.preempt_flg = False
 
-        self.sas.start()
+        self.act.start()
 
     def ImageCB(self,img):
         self.full_image = img
@@ -76,12 +76,12 @@ class ObjectRecognizer:
 
     def actionPreempt(self):
         rospy.loginfo('preempt callback')
-        self.sas.set_preempted(text = 'message for preempt')
+        self.act.set_preempted(text = 'message for preempt')
         self.preempt_flg = True
         
     def localizeObject(self, goal):
         rospy.loginfo('start action %s'%(goal.recog_goal))
-        target = goal.recog_goal
+        target_name = goal.recog_goal
         localize_feedback = ObjectRecognizerFeedback()
         localize_result = ObjectRecognizerResult()
         loop_flg = True
@@ -89,17 +89,17 @@ class ObjectRecognizer:
         cmd.linear.x = 0
         cmd.angular.z = 0
         while loop_flg and not rospy.is_shutdown():
-            object_existence, object_list = self.recognizeObject(target)
+            object_existence, object_list = self.recognizeObject(target_name)
             rospy.loginfo(object_existence)
             rospy.loginfo(object_list)
             bb = self.bbox
             range_flg = False
             # ここらへんをもう少し綺麗に書きたい
-            if target == 'None' and not object_existence:# 適当に見えたものを掴むための処理
+            if target_name == 'None' and not object_existence:# 適当に見えたものを掴むための処理
                 list_num = 0
                 range_flg = True
             elif object_existence:# 指定のものを掴むための処理
-                list_num = object_list.index(target)
+                list_num = object_list.index(target_name)
                 range_flg = True
             if range_flg:
                 object_image_range = ImageRange()
@@ -142,7 +142,7 @@ class ObjectRecognizer:
                 cmd.angular.z = 0
             if loop_flg:
                 localize_feedback.recog_feedback = range_flg
-                self.sas.publish_feedback(localize_feedback)
+                self.act.publish_feedback(localize_feedback)
             range_flg = False
             if self.preempt_flg:
                 self.preempt_flg = False
@@ -150,7 +150,7 @@ class ObjectRecognizer:
         else:
             rospy.loginfo('Succeeded')
             localize_result.recog_result = self.object_centroid
-            self.sas.set_succeeded(localize_result)
+            self.act.set_succeeded(localize_result)
 
     def initializeObject(self):
         rate = rospy.Rate(3.0)
