@@ -90,6 +90,7 @@ class ObjectRecognizer:
         cmd.angular.z = 0
         while loop_flg and not rospy.is_shutdown():
             object_existence, object_list = self.recognizeObject(target_name)
+            rospy.sleep(1.0)
             rospy.loginfo(object_existence)
             rospy.loginfo(object_list)
             bb = self.bbox
@@ -132,14 +133,13 @@ class ObjectRecognizer:
                 else:
                     #前後進
                     range_flg = False
-                        cmd.linear.x = 0.4
-                        self.cmd_vel_pub.publish(cmd)
-                        cmd.linear.x = 0
+                    self.moveBase(4.0)
             else:
                 #回転
-                cmd.angular.z = 3.0
+                cmd.angular.z = 1.0
                 self.cmd_vel_pub.publish(cmd)
                 cmd.angular.z = 0
+                rospy.sleep(1.0)
             if loop_flg:
                 localize_feedback.recog_feedback = range_flg
                 self.act.publish_feedback(localize_feedback)
@@ -151,6 +151,22 @@ class ObjectRecognizer:
             rospy.loginfo('Succeeded')
             localize_result.recog_result = self.object_centroid
             self.act.set_succeeded(localize_result)
+
+    def moveBase(self,rad_speed):
+        cmd = Twist()
+        for speed_i in range(10):
+            cmd.linear.x = rad_speed*0.05*speed_i
+            cmd.angular.z = 0
+            self.cmd_vel_pub.publish(cmd)
+            rospy.sleep(0.1)
+        for speed_i in range(10):
+            cmd.linear.x = rad_speed*0.05*(10-speed_i)
+            cmd.angular.z = 0
+            self.cmd_vel_pub.publish(cmd)
+            rospy.sleep(0.1)
+        cmd.linear.x = 0
+        cmd.angular.z = 0
+        self.cmd_vel_pub.publish(cmd)
 
     def initializeObject(self):
         rate = rospy.Rate(3.0)
