@@ -46,6 +46,8 @@ class ObjectRecognizer:
         self.object_centroid = Point()
         self.centroid_flg = False
         self.preempt_flg = False
+        self.search_count = 0
+        self.move_count = 0
 
         self.act.start()
 
@@ -117,11 +119,11 @@ class ObjectRecognizer:
                 if not math.isnan(object_coordinate.x):# 物体が正面になるように回転する処理
                     object_coordinate.y += 0.08 # calibrate RealSenseCamera d435
                     object_angle = math.atan2(object_coordinate.y, object_coordinate.x)
-                    if abs(object_angle) > 0.05:
+                    if abs(object_angle) > 0.07:
                         rospy.loginfo('There is not object in front.')
                         cmd.angular.z = object_angle * 3.2 #要調整
-                        if abs(cmd.angular.z) < 0.85:
-                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.85
+                        if abs(cmd.angular.z) < 0.75:
+                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.75
                         rospy.loginfo('cmd.angura.z : %s'%(object_angle))
                         self.cmd_vel_pub.publish(cmd)
                         cmd.angular.z = 0
@@ -132,14 +134,17 @@ class ObjectRecognizer:
                         loop_flg = False
                 else:
                     #前後進
+                    self.move_count += 1
                     range_flg = False
-                    self.moveBase(4.0)
+                    move_range = -0.4*(((self.search_count)%4)/2)+0.2
+                    self.moveBase(move_range)
             else:
                 #回転
-                cmd.angular.z = 1.0
+                self.search_count += 1
+                cmd.angular.z = -2.0*(((self.search_count)%4)/2)+1.0
                 self.cmd_vel_pub.publish(cmd)
                 cmd.angular.z = 0
-                rospy.sleep(1.0)
+                rospy.sleep(2.0)
             if loop_flg:
                 localize_feedback.recog_feedback = range_flg
                 self.act.publish_feedback(localize_feedback)
@@ -148,6 +153,8 @@ class ObjectRecognizer:
                 self.preempt_flg = False
                 break
         else:
+            self.search_count = 0
+            self.move_count = 0
             rospy.loginfo('Succeeded')
             localize_result.recog_result = self.object_centroid
             self.act.set_succeeded(localize_result)
