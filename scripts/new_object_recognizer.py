@@ -9,36 +9,37 @@ import cv2
 import PIL
 import numpy as np
 import actionlib
-# ros msgs
+# -- ros msgs --
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist, Point
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from darknet_ros_msgs.msg import BoundingBoxes
 from object_recognizer.msg import ImageRange
-# ros srvs
+# -- ros srvs --
 from object_recognizer.srv import RecognizeExistence
-# action msgs
+# -- action msgs --
 from manipulation.msg import *
 
 class ObjectRecognizer:
     def __init__(self):
-        # topic subscriber
+        # -- topic subscriber --
         realsense_sub = rospy.Subscriber('/camera/color/image_raw',Image,self.ImageCB)
         bounding_box_sub  = rospy.Subscriber('/darknet_ros/bounding_boxes',BoundingBoxes,self.BoundingBoxCB)
         detector_sub = rospy.Subscriber('/object/xyz_centroid',Point,self.detectorCB)
-        # topic publisher service化,モジュール化したい
+        # -- topic publisher --
+        #service化,モジュール化したい
         self.image_range_pub = rospy.Publisher('/object/image_range',ImageRange,queue_size=1)
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop',Twist,queue_size=1)
-        # service server
+        # -- service server --
         recog_service_server = rospy.Service('/object/recognize',RecognizeExistence,self.recognizeObject)
-        # action server
+        # -- action server --
         self.act = actionlib.SimpleActionServer('/object/localize',
                                                 ObjectRecognizerAction,
                                                 execute_cb = self.localizeObject,
                                                 auto_start = False)
         self.act.register_preempt_callback(self.actionPreempt)
-        
+        # -- instance variables --
         self.bridge = CvBridge() # 仕様がわかり次第消す
         self.bbox = 'None'
         self.update_time = 0 # darknetからpublishされた時刻を保存
