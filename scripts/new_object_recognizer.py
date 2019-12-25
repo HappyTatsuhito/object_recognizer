@@ -93,10 +93,10 @@ class ObjectRecognizer:
         cmd.angular.z = 0
         while loop_flg and not rospy.is_shutdown():
             object_existence, object_list = self.recognizeObject(target_name)
+            bb = self.bbox
             rospy.sleep(1.0)
             rospy.loginfo(object_existence)
             rospy.loginfo(object_list)
-            bb = self.bbox
             range_flg = False
             # ここらへんをもう少し綺麗に書きたい
             if target_name == 'None' and not object_existence:# 適当に見えたものを掴むための処理
@@ -124,12 +124,12 @@ class ObjectRecognizer:
                     if abs(object_angle) > 0.06:
                         rospy.loginfo('There is not object in front.')
                         cmd.angular.z = object_angle * 3.2 #要調整
-                        if abs(cmd.angular.z) < 0.75:
-                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.75
+                        if abs(cmd.angular.z) < 0.65:
+                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.65
                         rospy.loginfo('cmd.angura.z : %s'%(object_angle))
                         self.cmd_vel_pub.publish(cmd)
                         cmd.angular.z = 0
-                        rospy.sleep(1.0)
+                        rospy.sleep(1.5)
                         # retry
                     else:
                         # success
@@ -138,8 +138,9 @@ class ObjectRecognizer:
                     #前後進
                     self.move_count += 1
                     range_flg = False
-                    move_range = -0.4*(((self.search_count)%4)/2)+0.2
+                    move_range = -0.4*(((self.move_count)%4)/2)+0.2
                     self.moveBase(move_range)
+                    rospy.sleep(0.5)
             else:
                 #回転
                 self.search_count += 1
