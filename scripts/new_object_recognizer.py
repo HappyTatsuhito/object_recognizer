@@ -187,7 +187,7 @@ class ObjectRecognizer:
             
             
 if __name__ == '__main__':
-    rospy.init_node('object_recognizer')
+    rospy.init_node('new_object_recognizer')
     obj_recog = ObjectRecognizer()
     obj_recog.initializeObject()
     rospy.spin()
