@@ -127,7 +127,7 @@ class ObjectRecognizer:
                         rospy.loginfo('cmd.angura.z : %s'%(object_angle))
                         self.cmd_vel_pub.publish(cmd)
                         cmd.angular.z = 0
-                        rospy.sleep(1.5)
+                        rospy.sleep(3.0)
                         # retry
                     else:
                         # success
@@ -138,14 +138,14 @@ class ObjectRecognizer:
                     range_flg = False
                     move_range = -0.4*(((self.move_count)%4)/2)+0.2
                     self.moveBase(move_range)
-                    rospy.sleep(0.5)
+                    rospy.sleep(1.5)
             else:
                 #回転
                 self.search_count += 1
                 cmd.angular.z = -2.0*(((self.search_count)%4)/2)+1.0
                 self.cmd_vel_pub.publish(cmd)
                 cmd.angular.z = 0
-                rospy.sleep(2.0)
+                rospy.sleep(3.0)
             if loop_flg:
                 localize_feedback.recog_feedback = range_flg
                 self.act.publish_feedback(localize_feedback)
