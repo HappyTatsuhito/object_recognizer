@@ -5,12 +5,12 @@ import rospy
 import sys
 import time
 import math
+import rosparam
 import actionlib
 # -- ros msgs --
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist, Point
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 from darknet_ros_msgs.msg import BoundingBoxes
 from object_recognizer.msg import ImageRange
 # -- ros srvs --
@@ -37,7 +37,7 @@ class ObjectRecognizer:
                                                 auto_start = False)
         self.act.register_preempt_callback(self.actionPreempt)
         # -- instance variables --
-        self.bridge = CvBridge() # 仕様がわかり次第消す
+        #self.object_list = rosparam.get_param('/object_list')
         self.bbox = 'None'
         self.update_time = 0 # darknetからpublishされた時刻を保存
         self.update_flg = False # darknetからpublishされたかどうかの確認
@@ -138,7 +138,7 @@ class ObjectRecognizer:
                     range_flg = False
                     move_range = -0.4*(((self.move_count)%4)/2)+0.2
                     self.moveBase(move_range)
-                    rospy.sleep(1.5)
+                    rospy.sleep(3.0)
             else:
                 #回転
                 self.search_count += 1
