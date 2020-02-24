@@ -132,8 +132,8 @@ class ObjectRecognizer:
                     if abs(object_angle) > 0.07:
                         rospy.loginfo('There is not object in front.')
                         cmd.angular.z = object_angle * 3.0 #要調整
-                        if abs(cmd.angular.z) < 0.5:
-                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.5
+                        if abs(cmd.angular.z) < 0.6:
+                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.6
                         rospy.loginfo('cmd.angura.z : %s'%(object_angle))
                         self.cmd_vel_pub.publish(cmd)
                         cmd.angular.z = 0
