@@ -37,7 +37,7 @@ class ObjectRecognizer:
                                                 auto_start = False)
         self.act.register_preempt_callback(self.actionPreempt)
         # -- instance variables --
-        #self.object_list = rosparam.get_param('/object_list')
+        self.object_dict = rosparam.get_param('/object_dict')
         self.bbox = 'None'
         self.update_time = 0 # darknetからpublishされた時刻を保存
         self.update_flg = False # darknetからpublishされたかどうかの確認
@@ -72,6 +72,11 @@ class ObjectRecognizer:
             return False, []
         for i in range(len(bb)):
             object_list.append(bb[i].Class)
+        '''
+        if object_name in self.object_dict.keys():
+            object_existence = self.object_dict[obejct_name] in object_list
+        else:
+        '''
         object_existence = object_name in object_list
         return object_existence, object_list
 
@@ -91,13 +96,19 @@ class ObjectRecognizer:
         cmd.angular.z = 0
         while loop_flg and not rospy.is_shutdown():
             bb = self.bbox
-            object_existence, object_list = self.recognizeObject(target_name, bb)
+            if target_name in self.object_dict.keys():
+                for i in range(len(self.object_dict[target_name])):
+                    object_existence, object_list = self.recognizeObject(self.object_dict[target_name][i], bb)
+            else:
+                object_existence, object_list = self.recognizeObject(target_name, bb)
 #            rospy.sleep(1.0)
+            rospy.loginfo('-- recognize result --')
             rospy.loginfo(object_existence)
             rospy.loginfo(object_list)
+            rospy.loginfo('----------------------')
             range_flg = False
             # ここらへんをもう少し綺麗に書きたい
-            if target_name == 'None' and not object_existence:# 適当に見えたものを掴むための処理
+            if target_name == 'None' and not object_existence:# 適当に見えたものを掴むための処理（ここいらんかも）
                 list_num = 0
                 range_flg = True
             elif object_existence:# 指定のものを掴むための処理
