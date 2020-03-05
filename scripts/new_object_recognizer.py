@@ -8,9 +8,7 @@ import math
 import rosparam
 import actionlib
 # -- ros msgs --
-from std_msgs.msg import String
 from geometry_msgs.msg import Twist, Point
-from sensor_msgs.msg import Image
 from darknet_ros_msgs.msg import BoundingBoxes
 from object_recognizer.msg import ImageRange
 # -- ros srvs --
@@ -21,7 +19,6 @@ from manipulation.msg import *
 class ObjectRecognizer:
     def __init__(self):
         # -- topic subscriber --
-        realsense_sub = rospy.Subscriber('/camera/color/image_raw',Image,self.ImageCB)
         bounding_box_sub  = rospy.Subscriber('/darknet_ros/bounding_boxes',BoundingBoxes,self.BoundingBoxCB)
         detector_sub = rospy.Subscriber('/object/xyz_centroid',Point,self.detectorCB)
         # -- topic publisher --
@@ -31,7 +28,7 @@ class ObjectRecognizer:
         # -- service server --
         recog_service_server = rospy.Service('/object/recognize',RecognizeExistence,self.recognizeObject)
         # -- action server --
-        self.act = actionlib.SimpleActionServer('/object/localize',
+        self.act = actionlib.SimpleActionServer('/manipulation/localize',
                                                 ObjectRecognizerAction,
                                                 execute_cb = self.localizeObject,
                                                 auto_start = False)
@@ -48,9 +45,6 @@ class ObjectRecognizer:
         self.move_count = 0
 
         self.act.start()
-
-    def ImageCB(self,img):
-        self.full_image = img
 
     def BoundingBoxCB(self,bb):
         self.update_time = time.time()
