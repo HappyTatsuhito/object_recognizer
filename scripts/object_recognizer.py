@@ -125,9 +125,9 @@ class ObjectRecognizer:
                     object_angle = math.atan2(object_coordinate.y, object_coordinate.x)
                     if abs(object_angle) > 0.07:
                         rospy.loginfo('There is not object in front.')
-                        cmd.angular.z = object_angle * 3.0 #要調整
-                        if abs(cmd.angular.z) < 0.6:
-                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.6
+                        cmd.angular.z = object_angle * 3.5 #要調整
+                        if abs(cmd.angular.z) < 0.7:
+                            cmd.angular.z = int(cmd.angular.z/abs(cmd.angular.z))*0.7
                         rospy.loginfo('cmd.angura.z : %s'%(object_angle))
                         self.cmd_vel_pub.publish(cmd)
                         cmd.angular.z = 0
@@ -191,7 +191,7 @@ class ObjectRecognizer:
             
             
 if __name__ == '__main__':
-    rospy.init_node('new_object_recognizer')
+    rospy.init_node('object_recognizer')
     obj_recog = ObjectRecognizer()
     obj_recog.initializeObject()
     rospy.spin()
